@@ -1,1 +1,1 @@
-### some scripts use Python.
+### Some scripts use Python.

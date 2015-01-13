@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
- 
+
 import httplib, urllib
 import re, urllib2, json
 import socket, sys
 
 
-domain = "linsir.tk"
+domain = "Domain"
 sub_domain = ['@',]
-email = "vi5i0n@qq.com"# replace with your email
-password = "Vision"# replace with your password
+email = "username@email.com"# replace with your email
+password = "passwd"# replace with your password
 
 class dnspod(object):
     """docstring for dnspod"""
@@ -21,7 +21,7 @@ class dnspod(object):
             "format" : "json",
             "record_line" : "默认",
         }
-    
+
     def get_public_ip(self):
         data = urllib2.urlopen("http://20140507.ip138.com/ic.asp").read()
         ip = re.search('\d+\.\d+\.\d+\.\d+',data).group(0)
@@ -30,7 +30,7 @@ class dnspod(object):
     def get_domain_ip(self):
         result=socket.getaddrinfo(domain,'http')[0][4][0]
         return result
-    
+
     def post(self,method):
         headers = {"UserAgent":"Ddns Client/0.1.0(vi5i0n@hotmail.com)",
                     "Content-type": "application/x-www-form-urlencoded",
@@ -63,7 +63,7 @@ class dnspod(object):
                 if record["name"] in sub_domain:
                     name = record["name"]
                     record_ids[name] = record["id"]
-                
+
         # print record_ids
         return record_ids
 
@@ -76,8 +76,8 @@ class dnspod(object):
             data = self.post("Record.Ddns")
             data = json.loads(data)
         return data['status']['code']
-               
- 
+
+
 if __name__ == '__main__':
     dns = dnspod()
     try:

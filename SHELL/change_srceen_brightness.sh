@@ -1,6 +1,6 @@
 #!bin/bash
 #author:vi5i0n
-#data:2013-06-24
+#date:2013-06-24
 #
 read -p "pls input the brightness value(20-976):" value
 

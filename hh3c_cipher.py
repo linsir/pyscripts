@@ -1,9 +1,11 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 
 __version__ = '1.0'
 
 """
+华为设备密码解密脚本
+
 hh3c_cipher.py - You don't make an omlette without cracking a few eggs!
 
 Here's the story...

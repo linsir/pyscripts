@@ -3,7 +3,9 @@
 # @Date    : 2015-05-15 20:50:52
 # @Author  : Linsir (root@linsir.org)
 # @Link    : http://linsir.org
-
+'''
+Python read xml file
+'''
 try:
     import xml.etree.cElementTree as ET
 except ImportError:

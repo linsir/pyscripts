@@ -1,5 +1,9 @@
-#!/usr/bin/env python3
-#coding: utf-8
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+'''
+Send mail via SMTP by Python.
+'''
 import smtplib
 from email.mime.text import MIMEText
 from email.header import Header

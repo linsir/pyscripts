@@ -3,7 +3,9 @@
 # @Date    : 2015-03-11 14:08:36
 # @Author  : Linsir (vi5i0n@hotmail.com)
 # @Link    : http://Linsir.sinaapp.com
-
+'''
+统计单词数
+'''
 import re
 
 def get_word_frequencies(file_name):

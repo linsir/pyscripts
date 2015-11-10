@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# @Date    : 2014-01-13 20:50:52
+# @Author  : Linsir (root@linsir.org)
+# @Link    : http://linsir.org
 
 
 import httplib, urllib
@@ -12,7 +15,7 @@ sub_domain = ['@',]
 email = "username@email.com"# replace with your email
 password = "passwd"# replace with your password
 
-class dnspod(object):
+class Dnspod(object):
     """docstring for dnspod"""
     def __init__(self):
         self.params = {
@@ -23,7 +26,7 @@ class dnspod(object):
         }
 
     def get_public_ip(self):
-        data = urllib2.urlopen("http://20140507.ip138.com/ic.asp").read()
+        data = urllib2.urlopen("http://ip.cn").read()
         ip = re.search('\d+\.\d+\.\d+\.\d+',data).group(0)
         return ip
 
@@ -79,7 +82,7 @@ class dnspod(object):
 
 
 if __name__ == '__main__':
-    dns = dnspod()
+    dns = Dnspod()
     try:
         domain_ip = dns.get_domain_ip()
         public_ip = dns.get_public_ip()

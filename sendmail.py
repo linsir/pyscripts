@@ -20,6 +20,8 @@ msg['Subject'] = Header(subject, 'utf-8')
 
 smtp = smtplib.SMTP()
 smtp.connect('smtp.163.com')
+# if use https
+# smtp.starttls()
 smtp.login(username, password)
 smtp.sendmail(sender, receiver, msg.as_string())
 smtp.quit()

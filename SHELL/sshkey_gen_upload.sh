@@ -36,7 +36,7 @@ fi
 if [ "$user" = "" ] && [ "$ip" = "" ];then
     exit 
 else
-    ssh-copy-id -i ~/.ssh/$note.pub $user@$ip:$port
+    ssh-copy-id -i ~/.ssh/$note.pub -p $port $user@$ip
 fi
 
 # config ssh config

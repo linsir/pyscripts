@@ -26,8 +26,8 @@ fi
 
 # copy the key to remote server
 
-read -p "pls input username of server:" user
 read -p "pls input ip adderss of server:" ip
+read -p "pls input username of server:" user
 read -p "pls input sshd port of server:" port
 
 if [ "$port" = "" ];then

@@ -9,27 +9,32 @@ import os
 import sys
 import zipfile
 
+def unzip(list):
 
-list = sys.argv[1:]
-for filename in list:
-    print "Processing File: %s" %filename
-    file = zipfile.ZipFile(filename,"r");
-    file_list = file.namelist()
-    if file_list[0].endswith('/') and (file_list[0] == file_list[-1]):
-        pre_folder = ''
-    else:
-        pre_folder = filename.strip('.zip') + '/'
+    for filename in list:
+        print "Processing File: %s" %filename
+        file = zipfile.ZipFile(filename,"r");
+        file_list = file.namelist()
+        if file_list[0].endswith('/') and (file_list[0] == file_list[-1]):
+            pre_folder = ''
+        else:
+            pre_folder = filename.strip('.zip') + '/'
 
-    for name in file_list:
-        utf8name = pre_folder + name.decode('gbk')
-        print "Extracting %s" %utf8name 
-        pathname = os.path.dirname(utf8name)
-        if not os.path.exists(pathname) and pathname!= "":
-            os.makedirs(pathname)
-        data = file.read(name)
-        if not os.path.exists(utf8name):
-            fo = open(utf8name, "w")
-            fo.write(data)
-            fo.close
-    file.close()
-print 'Extract Sucess!'
+        for name in file_list:
+            utf8name = pre_folder + name.decode('gbk')
+            print "Extracting %s" %utf8name 
+            pathname = os.path.dirname(utf8name)
+            if not os.path.exists(pathname) and pathname!= "":
+                os.makedirs(pathname)
+            data = file.read(name)
+            if not os.path.exists(utf8name):
+                fo = open(utf8name, "w")
+                fo.write(data)
+                fo.close
+        file.close()
+    print 'Extract Sucess!'
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print "Usage:"+" pyzip.py "+"file_list or single zipfile."
+        sys.exit()
+    unzip(list = sys.argv[1:])

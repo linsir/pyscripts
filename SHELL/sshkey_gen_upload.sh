@@ -24,6 +24,9 @@ else
     fi
 fi
 
+ssh-agent bash
+ssh-add ~/.ssh/$note
+
 # copy the key to remote server
 
 read -p "pls input ip adderss of server:" ip
@@ -48,6 +51,4 @@ Host $note
     port $port
     IdentityFile ~/.ssh/$note
 EOF
-ssh-agent bash
-ssh-add ~/.ssh/$note
 exit

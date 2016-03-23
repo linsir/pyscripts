@@ -24,7 +24,7 @@ else
     fi
 fi
 
-ssh-agent bash
+# ssh-agent bash
 ssh-add ~/.ssh/$note
 
 # copy the key to remote server
@@ -39,7 +39,7 @@ fi
 if [ "$user" = "" ] && [ "$ip" = "" ];then
     exit 
 else
-    ssh-copy-id -i ~/.ssh/$note.pub -p $port $user@$ip
+    ssh-copy-id -o PubkeyAuthentication=no -i ~/.ssh/$note.pub -p $port $user@$ip
 fi
 
 # config ssh config

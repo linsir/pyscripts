@@ -138,7 +138,7 @@ telnet 密码貌似跟出厂时间及机器型号都是有相关的。这个是�
 3.　替换指纹数据，帮别人打卡（入职时一般是录了两个指纹）
 
 ##　代码
-github:<>
+github:<https://github.com/vi5i0n/pyscripts/tree/master/zkteco_check_in>
 使用方法：把log.sh上传到`/mnt/mtdblock/data`下执行即可。
 
     bash log.sh checkin [ID]

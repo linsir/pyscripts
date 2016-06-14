@@ -71,13 +71,20 @@ function change_log(){
     if [ "${ID}" = "" ]; then
         exit 0
     fi
-    read -p "请输入签到的时间[2016-06-06T16:03:50](默认今天): " Date
-    if [ "${Date}" = "" ]; then
-        # Date=$(date '+%Y-%m-%dT%H:%M:%S')
-        Date=$(date '+%Y-%m-%d')
+
+    if [ "$1" = "" ]; then
+        echo $1
+        read -p "请输入签到的日期[2016-06-06](默认今天): " Date
+        if [ "${Date}" = "" ]; then
+            # Date=$(date '+%Y-%m-%dT%H:%M:%S')
+            Date=$(date '+%Y-%m-%d')
+        fi
+        Time="08:"$(rand 55 59)":"$(rand 10 59)
+        DateTime=$Date"T"$Time
+    else
+        DateTime=$1
     fi
-    Time="08:"$(rand 55 59)":"$(rand 10 59)
-    DateTime=$Date"T"$Time
+
     echo -e "the datetime:[\033[32;1m${DateTime}\033[0m]"
     echo "Press any key to start to change the log...or Press Ctrl+C to cancel"
     char=`get_char`
@@ -98,7 +105,7 @@ function Usage(){
             ;;
 
             "change" )
-                change_log
+                change_log $2
                 exit
             ;;
 
@@ -106,12 +113,14 @@ function Usage(){
             echo "Bad option, please choose again"
             echo "Usage: 1. bash $0 checkin [ID]";
             echo "       2. bash $0 change ";
+            echo "       2. bash $0 change [time] (2016-06-06T16:03:50)";
             exit
         esac
     done
     echo "Bad option, please choose again"
     echo "Usage: 1. bash $0 checkin [ID]";
     echo "       2. bash $0 change ";
+    echo "       2. bash $0 change [time] (2016-06-06T16:03:50)";
 }
 
 Usage "$@"

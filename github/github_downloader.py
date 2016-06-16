@@ -6,6 +6,7 @@
 # @Version :
 
 import os
+import getopt
 import requests
 import re
 import urlparse
@@ -26,6 +27,7 @@ class URLThread(Thread):
         self.allow_redirects = allow_redirects
         self.response = None
 
+
     def run(self):
         try:
             self.response = requests.get(self.url, timeout = self.timeout, allow_redirects = self.allow_redirects)
@@ -36,7 +38,7 @@ class downloader(object):
     """
     Download any files or folders from repository in GitHub.
     """
-    def __init__(self, url):
+    def __init__(self, url, path="./"):
         self.session = requests.Session()
         self.session.headers = {
             "User-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.75 Safari/537.36",
@@ -44,8 +46,9 @@ class downloader(object):
         }
         self.base_url = url
         self.all_files = {}
+        self.path = path
 
-    def get_files(self, url, path='.'):
+    def get_files(self, url, path="./"):
 
         html = self.multi_get([url])[0][1].content
         files = re.compile(r'td class="content".+?<a href="(.+?)".+?</a>', re.DOTALL).findall(html)
@@ -107,7 +110,7 @@ class downloader(object):
 
     def run(self):
         print "Get files list ..."
-        all_files = self.get_files(url)
+        all_files = self.get_files(self.base_url, self.path)
         # print all_files
         print "Download now ..."
         uris = all_files.keys()
@@ -115,11 +118,49 @@ class downloader(object):
         self.save(data)
         print "Save Data Sucessfully."
 
+class Usage(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+
+def help_msg():
+    print("Author: Linsir(https://linsir.org)")
+    print("Download any files or folders from repository in GitHub.")
+    print("Usage: github_downloader.py -o [save path] [github url] ")
+
+    sys.exit(0)
+
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
+
+    try:
+        out_path = "./"
+        url = None
+        try:
+            opts, args = getopt.getopt(argv[1:], "ho:", ["help"])
+            for op,value in opts:
+                if op in ("-h","-H","--help"):
+                    help_msg()
+                if op == "-o":
+                  out_path = value
+            if args:
+                url = args[0]
+        except getopt.error, msg:
+             raise Usage(msg)
+        # more code, unchanged
+        if url:
+            app = downloader(url,out_path)
+            app.run()
+    except Usage, err:
+        print >>sys.stderr, err.msg
+        print >>sys.stderr, "for help use --help"
+        return 2
 
 
 if __name__ == '__main__':
-    url = 'https://github.com/onlylemi/download-any-for-github'
-    url = 'https://github.com/vi5i0n/ngx-lua-images/tree/master/ngx-lua-images'
-    url = 'https://github.com/vi5i0n/Pastebin/tree/master/static'
-    app = downloader(url)
-    app.run()
+    # url = 'https://github.com/onlylemi/download-any-for-github'
+    # url = 'https://github.com/vi5i0n/ngx-lua-images/tree/master/ngx-lua-images'
+    # url = 'https://github.com/vi5i0n/Pastebin/tree/master/static'
+    # app = downloader(url)
+    # app.run()
+    sys.exit(main())

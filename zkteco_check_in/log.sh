@@ -8,15 +8,6 @@
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
 export PATH
 
-function get_char(){
-        SAVEDSTTY=`stty -g`
-        stty -echo
-        stty cbreak
-        dd if=/dev/tty bs=1 count=1 2> /dev/null
-        stty -raw
-        stty echo
-        stty $SAVEDSTTY
-}
 # 随机生成范围的数字
 function rand(){
     local beg=$1
@@ -24,49 +15,46 @@ function rand(){
     echo $((RANDOM % ($end - $beg) + $beg))
 }
 
+function query_id(){
+    echo "==========================="
+    name=$1
+    user_id=`./sqlite3_mips ZKDB.db "SELECT User_PIN FROM USER_INFO WHERE NAME = '${name}'"`
+    echo "[\033[32;1m${name}\033[0m]'s ID is [\033[32;1m${user_id}\033[0m] "
+    ./sqlite3_mips ZKDB.db ".quit"
+}
 
 function check_in(){
     echo "==========================="
+    user_id=$1
+    name=`./sqlite3_mips ZKDB.db "SELECT Name FROM USER_INFO WHERE User_PIN = '${user_id}'"`
+    echo "签到用户: [\033[32;1m${name}\033[0m]"
 
-    # read -p "请输入签到用户工号(默认用户ID:2010): " UserID
-    # if [ "${UserID}" = "" ]; then
-    #     UserID=2010
-    # fi
-    UserID=$1
-    echo "签到用户: ${UserID}"
-    ./sqlite3_mips ZKDB.db "SELECT Name FROM USER_INFO WHERE User_PIN = '${UserID}'"
-    # read -p "请输入签到的时间(默认今天)[2016-06-06T16:03:50]: " Date
-    # if [ "${Date}" = "" ]; then
-    #     # Date=$(date '+%Y-%m-%dT%H:%M:%S')
-    #     Date=$(date '+%Y-%m-%d')
-    # fi
-    Date=$(date '+%Y-%m-%d')
+    today=$(date '+%Y-%m-%d')
 
-    Time="08:"$(rand 55 59)":"$(rand 10 59)
-    DateTime=$Date"T"$Time
+    new_time="08:"$(rand 55 59)":"$(rand 10 59)
+    DateTime=$today"T"$new_time
 
     echo -e "the datetime:[\033[32;1m${DateTime}\033[0m]"
-    echo "Press any key to start to check in...or Press Ctrl+C to cancel"
-    char=`get_char`
+    read -rsp $'Press enter to continue...or Press Ctrl+C to cancel\n'
 
-    echo "签到时间: ${DateTime}"
-    ./sqlite3_mips ZKDB.db "INSERT INTO ATT_LOG VALUES (null,'${UserID}',15,'${DateTime}','0','0',null,null,null,null,0);"
-    ./sqlite3_mips ZKDB.db "SELECT * FROM ATT_LOG WHERE User_PIN = '${UserID}' ORDER BY ID DESC LIMIT 0,1;"
-    echo -e "[\033[32;1mChange Sucessfuly\033[0m]"
+    # echo "签到时间: ${DateTime}"
+    ./sqlite3_mips ZKDB.db "INSERT INTO ATT_LOG VALUES (null,'${user_id}',15,'${DateTime}','0','0',null,null,null,null,0);"
+    save_time=`./sqlite3_mips ZKDB.db "SELECT * FROM ATT_LOG WHERE User_PIN = '${user_id}' ORDER BY ID DESC LIMIT 0,1;"`
+    echo -e "[\033[32;1m${name}\033[0m] 签到时间: [\033[32;1m${save_time} Sucessfuly\033[0m]"
     ./sqlite3_mips ZKDB.db ".quit"
 }
 
 function change_log(){
     echo "==========================="
 
-    read -p "请输入签到用户工号(默认用户ID 2010): " UserID
-    if [ "${UserID}" = "" ]; then
-        UserID=2010
+    read -p "请输入签到用户工号(默认用户ID 2055): " user_id
+    if [ "${user_id}" = "" ]; then
+        user_id=2055
     fi
-    echo "签到用户: ${UserID}"
+    echo "签到用户: ${user_id}"
     Month=$(date '+%Y-%m%')
-    ./sqlite3_mips ZKDB.db "SELECT Name FROM USER_INFO WHERE User_PIN = '${UserID}'"
-    ./sqlite3_mips ZKDB.db "SELECT ID,User_PIN,Verify_Time FROM ATT_LOG WHERE User_PIN = '${UserID}' and Verify_Time like '${Month}';"
+    ./sqlite3_mips ZKDB.db "SELECT Name FROM USER_INFO WHERE User_PIN = '${user_id}'"
+    ./sqlite3_mips ZKDB.db "SELECT ID,User_PIN,Verify_Time FROM ATT_LOG WHERE User_PIN = '${user_id}' and Verify_Time like '${Month}';"
     read -p "请输入更改签到的[ID]: " ID
     if [ "${ID}" = "" ]; then
         exit 0
@@ -74,24 +62,22 @@ function change_log(){
 
     if [ "$1" = "" ]; then
         echo $1
-        read -p "请输入签到的日期[2016-06-06](默认今天): " Date
-        if [ "${Date}" = "" ]; then
+        read -p "请输入签到的日期[2016-06-06](默认今天): " today
+        if [ "${today}" = "" ]; then
             # Date=$(date '+%Y-%m-%dT%H:%M:%S')
-            Date=$(date '+%Y-%m-%d')
+            today=$(date '+%Y-%m-%d')
         fi
-        Time="08:"$(rand 55 59)":"$(rand 10 59)
-        DateTime=$Date"T"$Time
+        new_time="08:"$(rand 55 59)":"$(rand 10 59)
+        DateTime=$today"T"$new_time
     else
         DateTime=$1
     fi
-
-    echo -e "the datetime:[\033[32;1m${DateTime}\033[0m]"
-    echo "Press any key to start to change the log...or Press Ctrl+C to cancel"
-    char=`get_char`
+    old_time=`./sqlite3_mips ZKDB.db "SELECT Verify_Time FROM ATT_LOG WHERE ID = '${ID}';"`
+    read -rsp $'Press enter to continue...or Press Ctrl+C to cancel\n'
 
     ./sqlite3_mips ZKDB.db "UPDATE ATT_LOG SET Verify_Time = '${DateTime}' WHERE ID = '${ID}';"
     echo -e "[\033[32;1mChange Sucessfuly\033[0m]"
-    ./sqlite3_mips ZKDB.db "SELECT ID,User_PIN,Verify_Time FROM ATT_LOG WHERE ID = '${ID}';"
+    # ./sqlite3_mips ZKDB.db "SELECT ID,User_PIN,Verify_Time FROM ATT_LOG WHERE ID = '${ID}';"
     ./sqlite3_mips ZKDB.db ".quit"
 }
 
@@ -99,28 +85,32 @@ function Usage(){
     while [ $# != 0 ]
     do
         case $1 in
+            "query" )
+                query_id $2
+                exit
+            ;;
             "checkin" )
                 check_in $2
                 exit
             ;;
-
             "change" )
                 change_log $2
                 exit
             ;;
-
             * )
             echo "Bad option, please choose again"
-            echo "Usage: 1. bash $0 checkin [ID]";
-            echo "       2. bash $0 change ";
-            echo "       2. bash $0 change [time] (2016-06-06T16:03:50)";
+            echo "Usage: 1. bash $0 query [Name]: Query user's ID."
+            echo "       2. bash $0 checkin [ID]: Check in for [ID]'s user."
+            echo "       3. bash $0 change: Change checkin time of current month."
+            echo "       4. bash $0 change [time] (2016-06-06T16:03:50): Change checkin time of current month with [time]."
             exit
         esac
     done
     echo "Bad option, please choose again"
-    echo "Usage: 1. bash $0 checkin [ID]";
-    echo "       2. bash $0 change ";
-    echo "       2. bash $0 change [time] (2016-06-06T16:03:50)";
+    echo "Usage: 1. bash $0 query [Name]: Query user's ID."
+    echo "       2. bash $0 checkin [ID]: Check in for [ID]'s user."
+    echo "       3. bash $0 change: Change checkin time of current month."
+    echo "       4. bash $0 change [time] (2016-06-06T16:03:50): Change checkin time of current month with [time]."
 }
 
 Usage "$@"

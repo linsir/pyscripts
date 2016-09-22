@@ -19,7 +19,7 @@ function query_id(){
     echo "==========================="
     name=$1
     user_id=`./sqlite3_mips ZKDB.db "SELECT User_PIN FROM USER_INFO WHERE NAME = '${name}'"`
-    echo "[\033[32;1m${name}\033[0m]'s ID is [\033[32;1m${user_id}\033[0m] "
+    echo -e "[\033[32;1m${name}\033[0m]'s ID is [\033[32;1m${user_id}\033[0m] "
     ./sqlite3_mips ZKDB.db ".quit"
 }
 
@@ -27,7 +27,7 @@ function check_in(){
     echo "==========================="
     user_id=$1
     name=`./sqlite3_mips ZKDB.db "SELECT Name FROM USER_INFO WHERE User_PIN = '${user_id}'"`
-    echo "签到用户: [\033[32;1m${name}\033[0m]"
+    echo -e "签到用户: [\033[32;1m${name}\033[0m]"
 
     today=$(date '+%Y-%m-%d')
 
@@ -39,7 +39,7 @@ function check_in(){
 
     # echo "签到时间: ${DateTime}"
     ./sqlite3_mips ZKDB.db "INSERT INTO ATT_LOG VALUES (null,'${user_id}',15,'${DateTime}','0','0',null,null,null,null,0);"
-    save_time=`./sqlite3_mips ZKDB.db "SELECT * FROM ATT_LOG WHERE User_PIN = '${user_id}' ORDER BY ID DESC LIMIT 0,1;"`
+    save_time=`./sqlite3_mips ZKDB.db "SELECT Verify_Time FROM ATT_LOG WHERE User_PIN = '${user_id}' ORDER BY ID DESC LIMIT 0,1;"`
     echo -e "[\033[32;1m${name}\033[0m] 签到时间: [\033[32;1m${save_time} Sucessfuly\033[0m]"
     ./sqlite3_mips ZKDB.db ".quit"
 }
@@ -51,9 +51,10 @@ function change_log(){
     if [ "${user_id}" = "" ]; then
         user_id=2055
     fi
-    echo "签到用户: ${user_id}"
+    name=`./sqlite3_mips ZKDB.db "SELECT Name FROM USER_INFO WHERE User_PIN = '${user_id}'"`
+    echo -e "签到用户: [\033[32;1m${name}\033[0m] (${user_id})"
     Month=$(date '+%Y-%m%')
-    ./sqlite3_mips ZKDB.db "SELECT Name FROM USER_INFO WHERE User_PIN = '${user_id}'"
+    
     ./sqlite3_mips ZKDB.db "SELECT ID,User_PIN,Verify_Time FROM ATT_LOG WHERE User_PIN = '${user_id}' and Verify_Time like '${Month}';"
     read -p "请输入更改签到的[ID]: " ID
     if [ "${ID}" = "" ]; then
@@ -73,6 +74,7 @@ function change_log(){
         DateTime=$1
     fi
     old_time=`./sqlite3_mips ZKDB.db "SELECT Verify_Time FROM ATT_LOG WHERE ID = '${ID}';"`
+    echo -e "Are you sure to change [\033[32;1m${old_time}\033[0m] into [\033[32;1m${DateTime}\033[0m]?"
     read -rsp $'Press enter to continue...or Press Ctrl+C to cancel\n'
 
     ./sqlite3_mips ZKDB.db "UPDATE ATT_LOG SET Verify_Time = '${DateTime}' WHERE ID = '${ID}';"

@@ -32,15 +32,6 @@ function get_base_info(){
     echo -e "ssh info: [\033[32;1m$user@$ip:$port\033[0m]"
 }
 
-function get_char(){
-        SAVEDSTTY=`stty -g`
-        stty -echo
-        stty cbreak
-        dd if=/dev/tty bs=1 count=1 2> /dev/null
-        stty -raw
-        stty echo
-        stty $SAVEDSTTY
-}
 # sshkey gen
 function create_key(){
     if [ -f ~/.ssh/$1 ];then
@@ -58,8 +49,7 @@ function copy_key_remote(){
     while true; do
         echo -e "Do you wish to use the default key([\033[32;1mid_rsa/id_rsa.pub\033[0m]),otherwise will create new keys.y/n:\c"
         read yn
-        echo "Press any key to start...or Press Ctrl+C to cancel"
-        char=`get_char`
+        read -rsp $'Press enter to continue...or Press Ctrl+C to cancel\n'
         case $yn in
             [Yy]* ) default_key=1; break;;
             [Nn]* ) default_key=0; create_key $server_name; break;;

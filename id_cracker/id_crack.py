@@ -12,6 +12,7 @@
 
 import json
 import requests
+import datetime
 
 DB_FILE = 'city_data.json'
 APP_KEY = '6be2b332ba7d24c29539ec0fbb064421'
@@ -100,16 +101,39 @@ class IDCard(object):
             return True
         else:
             return False
+      
+    def date_range(self, start_date, end_date):
+        for n in range(int ((end_date - start_date).days)):
+            yield start_date + datetime.timedelta(n)
+    
+    def get_days_of_year(self, year):
+        start = datetime.datetime(int(year),1,1)
+        end = datetime.datetime(int(year), 12, 31)
+          
+        for i in self.date_range(start, end):
+            # print i.year, i.month, i.day
+            yield i.strftime("%Y%m%d")
+
+    def gen_id_no_birthday(self, addr, year, checkcode):
+        for birthday in self.get_days_of_year(year):
+            now_id = addr + birthday + checkcode
+            if self.validation_id(now_id):
+                print now_id
 
 if __name__ == '__main__':
     id = '350626198701084431'
     name = '邓超'
     app = IDCard()
+    addr = '450922'
+    year = '1990'
+    checkcode = '0952'
     # app.get_checkcode(id[:-1])
     # print app.get_location(id[:6])['address']
     # print app.has_location(id[:6])
     # print app.validation_id(id)
     # for x in app.gen_id('350626', '19870108', '0'):
     #     print x
-    print app.validation_id_net(id, name)
+    # print app.validation_id_net(id, name)
+    # print app.get_days_of_year('1990')
+    print app.gen_id_no_birthday(addr, year, checkcode)
 

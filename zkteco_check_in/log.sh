@@ -15,6 +15,19 @@ function rand(){
     echo $((RANDOM % ($end - $beg) + $beg))
 }
 
+function del_log(){
+    echo "==========================="
+    log_id=$1
+    old_time=`./sqlite3_mips ZKDB.db "SELECT Verify_Time FROM ATT_LOG WHERE ID = '${log_id}';"`
+    user_id=`./sqlite3_mips ZKDB.db "SELECT User_PIN FROM ATT_LOG WHERE ID = '${log_id}';"`
+    name=`./sqlite3_mips ZKDB.db "SELECT Name FROM USER_INFO WHERE User_PIN = '${user_id}'"`
+    echo -e "Are you sure delete the log: [\033[32;1m${name}: ${old_time}\033[0m] "
+    read -rsp $'Press enter to continue...or Press Ctrl+C to cancel\n'
+    ./sqlite3_mips ZKDB.db "DELETE FROM ATT_LOG WHERE ID = '${log_id}'"
+    echo -e "[\033[32;1mDelete Sucessfuly\033[0m]"
+    ./sqlite3_mips ZKDB.db ".quit"
+}
+
 function query_id(){
     echo "==========================="
     name=$1
@@ -99,12 +112,17 @@ function Usage(){
                 change_log $2
                 exit
             ;;
+            "del" )
+                del_log $2
+                exit
+            ;;
             * )
             echo "Bad option, please choose again"
             echo "Usage: 1. bash $0 query [Name]: Query user's ID."
             echo "       2. bash $0 checkin [ID]: Check in for [ID]'s user."
             echo "       3. bash $0 change: Change checkin time of current month."
             echo "       4. bash $0 change [time] (2016-06-06T16:03:50): Change checkin time of current month with [time]."
+            echo "       5. bash $0 del [ID]: Delete the [ID]'s checkin log."
             exit
         esac
     done
@@ -113,6 +131,7 @@ function Usage(){
     echo "       2. bash $0 checkin [ID]: Check in for [ID]'s user."
     echo "       3. bash $0 change: Change checkin time of current month."
     echo "       4. bash $0 change [time] (2016-06-06T16:03:50): Change checkin time of current month with [time]."
+    echo "       5. bash $0 del [ID]: Delete the [ID]'s checkin log."
 }
 
 Usage "$@"

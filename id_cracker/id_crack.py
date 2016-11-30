@@ -135,5 +135,5 @@ if __name__ == '__main__':
     #     print x
     # print app.validation_id_net(id, name)
     # print app.get_days_of_year('1990')
-    print app.gen_id_no_birthday(addr, year, checkcode)
+    app.gen_id_no_birthday(addr, year, checkcode)
 

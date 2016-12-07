@@ -3,6 +3,7 @@
 # @Author  : Linsir (root@linsir.org)
 # @Link    : http://linsir.org
 # @Version : 0.2
+# Last Update: 2016-12-07
 # 2008 2010 2055
 
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
@@ -21,7 +22,7 @@ function del_log(){
     old_time=`./sqlite3_mips ZKDB.db "SELECT Verify_Time FROM ATT_LOG WHERE ID = '${log_id}';"`
     user_id=`./sqlite3_mips ZKDB.db "SELECT User_PIN FROM ATT_LOG WHERE ID = '${log_id}';"`
     if [ "${user_id}" = ""]; then
-        echo -e "[\033[32;1mError\033[0m]: Bad [log_id], please try again"
+        echo -e "[\033[31;1mError\033[0m]: Bad [log_id], please try again"
         menu
         exit
     fi
@@ -38,7 +39,7 @@ function query_id(){
     name=$1
     user_id=`./sqlite3_mips ZKDB.db "SELECT User_PIN FROM USER_INFO WHERE NAME = '${name}'"`
     if [ "${user_id}" = ""]; then
-        echo -e "[\033[32;1mError\033[0m]: Bad [name], please try again"
+        echo -e "[\033[31;1mError\033[0m]: Bad [name], please try again"
         menu
         exit
     fi
@@ -51,7 +52,7 @@ function check_in(){
     user_id=$1
     name=`./sqlite3_mips ZKDB.db "SELECT Name FROM USER_INFO WHERE User_PIN = '${user_id}'"`
     if [ "${name}" = ""]; then
-        echo -e "[\033[32;1mError\033[0m]: Bad [user_id], please try again"
+        echo -e "[\033[31;1mError\033[0m]: Bad [user_id], please try again"
         menu
         exit
     fi
@@ -81,7 +82,7 @@ function change_log(){
     fi
     name=`./sqlite3_mips ZKDB.db "SELECT Name FROM USER_INFO WHERE User_PIN = '${user_id}'"`
     if [ "${name}" = ""]; then
-        echo -e "[\033[32;1mError\033[0m]: Bad [user_id], please try again"
+        echo -e "[\033[31;1mError\033[0m]: Bad [user_id], please try again"
         menu
         exit
     fi
@@ -108,7 +109,7 @@ function change_log(){
     fi
     old_time=`./sqlite3_mips ZKDB.db "SELECT Verify_Time FROM ATT_LOG WHERE ID = '${ID}';"`
     if [ "${old_time}" = ""]; then
-        echo -e "[\033[32;1mError\033[0m]: Bad [log_id], please try again"
+        echo -e "[\033[31;1mError\033[0m]: Bad [log_id], please try again"
         menu
         exit
     fi
@@ -126,14 +127,14 @@ function change_finger(){
     old_user_id=$1
     new_user_id=$2
     if [ "${old_user_id}" = "" -a "${new_user_id}" = "" ]; then
-        echo -e "[\033[32;1mError\033[0m]: Bad option, please choose again"
+        echo -e "[\033[31;1mError\033[0m]: Bad option, please choose again"
         menu
         exit
     fi
     old_name=`./sqlite3_mips ZKDB.db "SELECT Name FROM USER_INFO WHERE User_PIN = '${old_user_id}'"`
     new_name=`./sqlite3_mips ZKDB.db "SELECT Name FROM USER_INFO WHERE User_PIN = '${new_user_id}'"`
     if [ "${old_name}" = "" -a "${new_name}" = "" ]; then
-        echo -e "[\033[32;1mError\033[0m]: Bad [ID], please try again"
+        echo -e "[\033[31;1mError\033[0m]: Bad [ID], please try again"
         menu
         exit
     fi
@@ -141,14 +142,16 @@ function change_finger(){
     new_user_defaulf_id=`./sqlite3_mips ZKDB.db "SELECT ID FROM USER_INFO WHERE User_PIN = '${new_user_id}'"`
     finger_id=`./sqlite3_mips ZKDB.db "SELECT ID FROM fptemplate10 WHERE pin = '${old_user_defaulf_id}' limit 1"`
     if [ "${finger_id}" = "" ]; then
-        echo -e "[\033[32;1mError\033[0m]: the user [\033[32;1m${old_name}\033[0m] have no finger data, please try again"
+        echo -e "[\033[31;1mError\033[0m]: the user [\033[32;1m${old_name}\033[0m] have no finger data, please try again"
         menu
         exit
     fi
     finger_type=`./sqlite3_mips ZKDB.db "SELECT fingerid FROM fptemplate10 WHERE ID = '${finger_id}'"`
     echo -e "用户: [\033[32;1m${old_name}\033[0m] => [\033[32;1m${new_name}\033[0m] fingerid([\033[32;1m${finger_type}\033[0m])"
     read -rsp $'Press enter to continue...or Press Ctrl+C to cancel\n'
-    echo "UPDATE fptemplate10 SET pin = '${new_user_defaulf_id}' WHERE ID = '${finger_id}';"
+    ./sqlite3_mips ZKDB.db "UPDATE fptemplate10 SET pin = '${new_user_defaulf_id}' WHERE ID = '${finger_id}';"
+    echo -e "[\033[32;1mChange Sucessfuly\033[0m]"
+    ./sqlite3_mips ZKDB.db ".quit"
 
 }
 function menu(){

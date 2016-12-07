@@ -126,6 +126,7 @@ function change_finger(){
     echo "==========================="
     old_user_id=$1
     new_user_id=$2
+    finger=$3
     if [ "${old_user_id}" = "" -a "${new_user_id}" = "" ]; then
         echo -e "[\033[31;1mError\033[0m]: Bad option, please choose again"
         menu
@@ -140,7 +141,12 @@ function change_finger(){
     fi
     old_user_defaulf_id=`./sqlite3_mips ZKDB.db "SELECT ID FROM USER_INFO WHERE User_PIN = '${old_user_id}'"`
     new_user_defaulf_id=`./sqlite3_mips ZKDB.db "SELECT ID FROM USER_INFO WHERE User_PIN = '${new_user_id}'"`
-    finger_id=`./sqlite3_mips ZKDB.db "SELECT ID FROM fptemplate10 WHERE pin = '${old_user_defaulf_id}' limit 1"`
+
+    if [ "$3" = "" ]; then
+        finger_id=`./sqlite3_mips ZKDB.db "SELECT ID FROM fptemplate10 WHERE pin = '${old_user_defaulf_id}' limit 1"`
+    else
+        finger_id=`./sqlite3_mips ZKDB.db "SELECT ID FROM fptemplate10 WHERE pin = '${old_user_defaulf_id}' and fingerid = '${finger}' "`
+    fi
     if [ "${finger_id}" = "" ]; then
         echo -e "[\033[31;1mError\033[0m]: the user [\033[32;1m${old_name}\033[0m] have no finger data, please try again"
         menu
@@ -149,7 +155,7 @@ function change_finger(){
     finger_type=`./sqlite3_mips ZKDB.db "SELECT fingerid FROM fptemplate10 WHERE ID = '${finger_id}'"`
     echo -e "用户: [\033[32;1m${old_name}\033[0m] => [\033[32;1m${new_name}\033[0m] fingerid([\033[32;1m${finger_type}\033[0m])"
     read -rsp $'Press enter to continue...or Press Ctrl+C to cancel\n'
-    ./sqlite3_mips ZKDB.db "UPDATE fptemplate10 SET pin = '${new_user_defaulf_id}' WHERE ID = '${finger_id}';"
+    ./sqlite3_mips ZKDB.db "UPDATE fptemplate10 SET pin = '${new_user_defaulf_id}', fingerid = '1' WHERE ID = '${finger_id}';"
     echo -e "[\033[32;1mChange Sucessfuly\033[0m]"
     ./sqlite3_mips ZKDB.db ".quit"
 
@@ -160,12 +166,12 @@ function menu(){
     echo "# @Link    : http://linsir.org"
     echo "# @Version : 0.2"
     echo "Bad option, please choose again"
-    echo "Usage: 1. bash $0 query [Name]: Query user's ID."
-    echo "       2. bash $0 checkin [ID]: Check in for [ID]'s user."
+    echo "Usage: 1. bash $0 query Name: Query [name]'s user_id."
+    echo "       2. bash $0 checkin user_id: Check in for [user_id]'s user."
     echo "       3. bash $0 change: Change checkin time of current month."
-    echo "       4. bash $0 change [time] (2016-06-06T16:03:50): Change checkin time of current month with [time]."
-    echo "       5. bash $0 del [ID]: Delete the [ID]'s checkin log."
-    echo "       6. bash $0 help [ID1] [ID2]: Use [ID1]'finger help [ID2] to checkin.' "
+    echo "       4. bash $0 change time (2016-06-06T16:03:50): Change checkin [time] of current month with time."
+    echo "       5. bash $0 del log_id: Delete the log_id's checkin log."
+    echo "       6. bash $0 help ID1 ID2 [fingerid]: Use [ID1]'s finger([fingerid]) help [ID2] to checkin.' "
 }
 
 function Usage(){
@@ -189,7 +195,7 @@ function Usage(){
                 exit
             ;;
             "help" )
-                change_finger $2 $3
+                change_finger $2 $3 $4
                 exit
             ;;
             * )

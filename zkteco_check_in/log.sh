@@ -21,7 +21,7 @@ function del_log(){
     log_id=$1
     old_time=`./sqlite3_mips ZKDB.db "SELECT Verify_Time FROM ATT_LOG WHERE ID = '${log_id}';"`
     user_id=`./sqlite3_mips ZKDB.db "SELECT User_PIN FROM ATT_LOG WHERE ID = '${log_id}';"`
-    if [ "${user_id}" = ""]; then
+    if [ "${user_id}" = "" ]; then
         echo -e "[\033[31;1mError\033[0m]: Bad [log_id], please try again"
         menu
         exit
@@ -38,7 +38,7 @@ function query_id(){
     echo "==========================="
     name=$1
     user_id=`./sqlite3_mips ZKDB.db "SELECT User_PIN FROM USER_INFO WHERE NAME = '${name}'"`
-    if [ "${user_id}" = ""]; then
+    if [ "${user_id}" = "" ]; then
         echo -e "[\033[31;1mError\033[0m]: Bad [name], please try again"
         menu
         exit
@@ -51,7 +51,7 @@ function check_in(){
     echo "==========================="
     user_id=$1
     name=`./sqlite3_mips ZKDB.db "SELECT Name FROM USER_INFO WHERE User_PIN = '${user_id}'"`
-    if [ "${name}" = ""]; then
+    if [ "${name}" = "" ]; then
         echo -e "[\033[31;1mError\033[0m]: Bad [user_id], please try again"
         menu
         exit
@@ -81,7 +81,7 @@ function change_log(){
         user_id=2055
     fi
     name=`./sqlite3_mips ZKDB.db "SELECT Name FROM USER_INFO WHERE User_PIN = '${user_id}'"`
-    if [ "${name}" = ""]; then
+    if [ "${name}" = "" ]; then
         echo -e "[\033[31;1mError\033[0m]: Bad [user_id], please try again"
         menu
         exit
@@ -108,7 +108,7 @@ function change_log(){
         DateTime=$1
     fi
     old_time=`./sqlite3_mips ZKDB.db "SELECT Verify_Time FROM ATT_LOG WHERE ID = '${ID}';"`
-    if [ "${old_time}" = ""]; then
+    if [ "${old_time}" = "" ]; then
         echo -e "[\033[31;1mError\033[0m]: Bad [log_id], please try again"
         menu
         exit

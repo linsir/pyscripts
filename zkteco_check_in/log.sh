@@ -73,6 +73,32 @@ function check_in(){
     ./sqlite3_mips ZKDB.db ".quit"
 }
 
+function check_out(){
+    echo "==========================="
+    user_id=$1
+    name=`./sqlite3_mips ZKDB.db "SELECT Name FROM USER_INFO WHERE User_PIN = '${user_id}'"`
+    if [ "${name}" = "" ]; then
+        echo -e "[\033[31;1mError\033[0m]: Bad [user_id], please try again"
+        menu
+        exit
+    fi
+    echo -e "签退用户: [\033[32;1m${name}\033[0m]"
+
+    today=$(date '+%Y-%m-%d')
+
+    new_time="17:"$(rand 35 59)":"$(rand 10 59)
+    DateTime=$today"T"$new_time
+
+    echo -e "the datetime:[\033[32;1m${DateTime}\033[0m]"
+    read -rsp $'Press enter to continue...or Press Ctrl+C to cancel\n'
+
+    # echo "签到时间: ${DateTime}"
+    ./sqlite3_mips ZKDB.db "INSERT INTO ATT_LOG VALUES (null,'${user_id}',15,'${DateTime}','0','0',null,null,null,null,0);"
+    save_time=`./sqlite3_mips ZKDB.db "SELECT Verify_Time FROM ATT_LOG WHERE User_PIN = '${user_id}' ORDER BY ID DESC LIMIT 0,1;"`
+    echo -e "[\033[32;1m${name}\033[0m] 签退时间: [\033[32;1m${save_time} Sucessfuly\033[0m]"
+    ./sqlite3_mips ZKDB.db ".quit"
+}
+
 function change_log(){
     echo "==========================="
 
@@ -168,10 +194,11 @@ function menu(){
     echo "Bad option, please choose again"
     echo "Usage: 1. bash $0 query Name: Query [name]'s user_id."
     echo "       2. bash $0 checkin user_id: Check in for [user_id]'s user."
-    echo "       3. bash $0 change: Change checkin time of current month."
-    echo "       4. bash $0 change time (2016-06-06T16:03:50): Change checkin [time] of current month with time."
-    echo "       5. bash $0 del log_id: Delete the log_id's checkin log."
-    echo "       6. bash $0 help ID1 ID2 [fingerid]: Use [ID1]'s finger([fingerid]) help [ID2] to checkin.' "
+    echo "       3. bash $0 checkout user_id: Check out for [user_id]'s user."
+    echo "       4. bash $0 change: Change checkin time of current month."
+    echo "       5. bash $0 change time (2016-06-06T16:03:50): Change checkin [time] of current month with time."
+    echo "       6. bash $0 del log_id: Delete the log_id's checkin log."
+    echo "       7. bash $0 help ID1 ID2 [fingerid]: Use [ID1]'s finger([fingerid]) help [ID2] to checkin.' "
 }
 
 function Usage(){
@@ -184,6 +211,10 @@ function Usage(){
             ;;
             "checkin" )
                 check_in $2
+                exit
+            ;;
+            "checkout" )
+                check_out $2
                 exit
             ;;
             "change" )

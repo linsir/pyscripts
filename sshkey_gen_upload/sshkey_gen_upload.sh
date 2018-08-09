@@ -8,10 +8,16 @@ echo "# Author: linsir"
 echo "# blog: linsir.org"
 
 function get_base_info(){
+    read -p "Please input config name:" config
+    if [ "$config" = "" ];then
+       config_name=`echo ~/.ssh/config`
+    else
+       config_name=`~/.ssh/config.d/$config`
+    fi
     read -p "Please input a server name:" server_name
     if [ "$server_name" = "" ];then
         exit
-    fi 
+    fi
     read -p "ip adderss of server:" ip
     if [ "$ip" = "" ];then
         exit
@@ -89,9 +95,10 @@ function copy_now(){
         ssh-copy-id -i ~/.ssh/$1.pub  "-p$port -o PubkeyAuthentication=no $user@$ip"
     fi
 }
+
 function add_config(){
     echo "add configure to .ssh/config.."
-    cat >> ~/.ssh/config<<-EOF
+    cat >> $config_name<<-EOF
 Host $server_name
     hostname $ip
     user $user

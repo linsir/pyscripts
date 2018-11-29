@@ -12,7 +12,7 @@ function get_base_info(){
     if [ "$config" = "" ];then
        config_name=`echo ~/.ssh/config`
     else
-       config_name=`~/.ssh/config.d/$config`
+       config_name=`echo ~/.ssh/config.d/$config`
     fi
     read -p "Please input a server name:" server_name
     if [ "$server_name" = "" ];then

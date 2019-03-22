@@ -1,11 +1,21 @@
 #!/bin/bash
-PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:$HOME/bin
 export PATH
 
 clear
 echo "# auto gen ssh key  and upload to remote server "
-echo "# Author: linsir"
-echo "# blog: linsir.org"
+echo "# Author: Linsir"
+echo "# blog: https://linsir.org"
+
+KEYS_PATH="$HOME/.ssh/keys_store/"
+CONF_PATH="$HOME/.ssh/config.d/"
+
+if [ ! -d ${CONF_PATH} ]; then
+    mkdir ${CONF_PATH} 
+fi
+if [ ! -d ${CONF_PATH} ]; then
+    mkdir ${CONF_PATH} 
+fi
 
 function confirm() {
     # Usage: x=$(confirm "do you want to continue?")
@@ -21,11 +31,12 @@ function confirm() {
 }
 
 function get_base_info(){
+
     read -p "Please input config name:" config
     if [ "$config" = "" ];then
-       config_name=`echo ~/.ssh/config`
+       config_name=`echo $HOME/.ssh/config`
     else
-       config_name=`echo ~/.ssh/config.d/$config`
+       config_name=`echo ${CONF_PATH}$config`
     fi
     read -p "Please input a server name:" server_name
     if [ "$server_name" = "" ];then
@@ -59,12 +70,19 @@ function get_base_info(){
 
 # sshkey gen
 function create_key(){
-    if [ -f ~/.ssh/$1 ];then
-        echo "the key exist!use old key"
+    if [ $default_key -eq 1 ];then
+        KEYS_PATH="$HOME/.ssh/"
+    fi
+    echo $KEYS_PATH
+    if [ ! -d ${KEYS_PATH}  ]; then
+        mkdir ${KEYS_PATH} 
+    fi
+    if [ -f ${KEYS_PATH}$1 ];then
+        echo "the key exist! use old key"
     else
         echo "create keys $1 now ..."
-        ssh-keygen -t rsa -C $1 -f ~/.ssh/$1
-        ssh-add ~/.ssh/$1
+        ssh-keygen -t rsa -C $1 -f ${KEYS_PATH}$1
+        ssh-add ${KEYS_PATH}$1
     fi
 }
 
@@ -72,7 +90,7 @@ function create_key(){
 # copy the key to remote server
 function copy_key_remote(){
     while true; do
-        echo -e "Do you wish to use the default key([\033[32;1mid_rsa/id_rsa.pub\033[0m]),otherwise will create new keys.y/n:\c"
+        echo -e "Do you wish to use the default key([\033[32;1mid_rsa/id_rsa.pub\033[0m]), otherwise will create new keys.y/n:\c"
         read yn
         read -rsp $'Press enter to continue...or Press Ctrl+C to cancel\n'
         case $yn in
@@ -107,25 +125,40 @@ function copy_key_remote(){
 }
 
 function copy_now(){
-    ssh-copy-id -i ~/.ssh/$1.pub  -p$port -o PubkeyAuthentication=no $user@$ip
+    if [ $default_key -eq 1 ];then
+        KEYS_PATH="$HOME/.ssh/"
+    fi
+
+    ssh-copy-id -i ${KEYS_PATH}$1.pub  -p$port -o PubkeyAuthentication=no $user@$ip
     local RET=$?
     if [ $RET -ne 0 ];then
         
-        ssh-copy-id -i ~/.ssh/$1.pub  "-p$port -o PubkeyAuthentication=no $user@$ip"
+        ssh-copy-id -i ${KEYS_PATH}$1.pub  "-p$port -o PubkeyAuthentication=no $user@$ip"
     fi
 }
 
 function add_config(){
-    echo "add configure to .ssh/config.."
+    echo "add configure to $config_name .."
+    if [ "$use_key" = "yes" ];then
+        cat >> $config_name<<-EOF
+Host $server_name
+    hostname $ip
+    user $user
+    port $port
+    IdentityFile ${KEYS_PATH}$1
+
+EOF
+    else
     cat >> $config_name<<-EOF
 Host $server_name
     hostname $ip
     user $user
     port $port
     Password $password
-    IdentityFile ~/.ssh/$1
+    IdentityFile ${KEYS_PATH}id_rsa
 
 EOF
+    fi
 }
 
 function main(){

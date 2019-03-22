@@ -7,6 +7,19 @@ echo "# auto gen ssh key  and upload to remote server "
 echo "# Author: linsir"
 echo "# blog: linsir.org"
 
+function confirm() {
+    # Usage: x=$(confirm "do you want to continue?")
+    #        if [ "$x" = "yes" ]
+    QUESTION="$1"
+    read -p "${QUESTION} [yN] " ANSWER
+    if [[ "${ANSWER}" == "y" ]] || [[ "${ANSWER}" == "Y" ]]
+    then
+        echo "yes"
+    else
+        echo "no"
+    fi
+}
+
 function get_base_info(){
     read -p "Please input config name:" config
     if [ "$config" = "" ];then
@@ -31,11 +44,17 @@ function get_base_info(){
     if [ "$user" = "" ];then
         user=root
     fi
+    use_key=$(confirm "Using ssh key login?")
+    if [ "$use_key" = "no" ];then
+        read -p "Password(default value:):" password
+    fi
     echo "####################################"
     echo "Please confirm the information:"
     echo ""
     echo -e "the server name: [\033[32;1m$server_name\033[0m]"
     echo -e "ssh info: [\033[32;1m$user@$ip:$port\033[0m]"
+    echo -e "use key: [\033[32;1m$use_key\033[0m]"
+    echo -e "password: [\033[32;1m$password\033[0m]"
 }
 
 # sshkey gen
@@ -103,6 +122,7 @@ Host $server_name
     hostname $ip
     user $user
     port $port
+    Password $password
     IdentityFile ~/.ssh/$1
 
 EOF
@@ -110,8 +130,12 @@ EOF
 
 function main(){
     get_base_info
-    copy_key_remote
-
+    if [ "$use_key" = "yes" ];then
+        copy_key_remote
+    else
+        add_config id_rsa
+    fi
+    
 }
 
 main

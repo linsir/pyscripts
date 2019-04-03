@@ -7,7 +7,9 @@ echo "# auto gen ssh key  and upload to remote server "
 echo "# Author: Linsir"
 echo "# blog: https://linsir.org"
 
-KEYS_PATH="$HOME/.ssh/keys_store/"
+KEYS_NAME="keys_store"
+KEYS_PATH="$HOME/.ssh/$KEYS_NAME/"
+
 CONF_PATH="$HOME/.ssh/config.d/"
 
 if [ ! -d ${CONF_PATH} ]; then
@@ -145,7 +147,7 @@ Host $server_name
     hostname $ip
     user $user
     port $port
-    IdentityFile ${KEYS_PATH}$1
+    IdentityFile ~/.ssh/$KEYS_NAME/$1
 
 EOF
     else
@@ -155,7 +157,7 @@ Host $server_name
     user $user
     port $port
     Password $password
-    IdentityFile ${KEYS_PATH}id_rsa
+    IdentityFile ~/.ssh/id_rsa
 
 EOF
     fi

@@ -109,7 +109,7 @@ function copy_key_remote(){
         local RET=$?
         echo $RET
         if [ $RET -eq 0 ];then
-            add_config id_rsa
+            add_config default
             exit 1
         else
             exit 0
@@ -141,7 +141,7 @@ function copy_now(){
 
 function add_config(){
     echo "add configure to $config_name .."
-    if [ "$use_key" = "yes" ];then
+    if [ "$use_key" = "yes" ] ||[ "$config_name" = "default" ] ;then
         cat >> $config_name<<-EOF
 Host $server_name
     hostname $ip
@@ -168,7 +168,7 @@ function main(){
     if [ "$use_key" = "yes" ];then
         copy_key_remote
     else
-        add_config id_rsa
+        add_config default
     fi
     
 }

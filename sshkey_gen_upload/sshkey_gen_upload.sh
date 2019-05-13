@@ -2,7 +2,7 @@
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:$HOME/bin
 export PATH
 
-clear
+# clear
 echo "# auto gen ssh key  and upload to remote server "
 echo "# Author: Linsir"
 echo "# blog: https://linsir.org"
@@ -23,12 +23,12 @@ function confirm() {
     # Usage: x=$(confirm "do you want to continue?")
     #        if [ "$x" = "yes" ]
     QUESTION="$1"
-    read -p "${QUESTION} [yN] " ANSWER
-    if [[ "${ANSWER}" == "y" ]] || [[ "${ANSWER}" == "Y" ]]
+    read -p "${QUESTION} [Yn] " ANSWER
+    if [[ "${ANSWER}" == "n" ]] || [[ "${ANSWER}" == "N" ]]
     then
-        echo "yes"
-    else
         echo "no"
+    else
+        echo "yes"
     fi
 }
 
@@ -57,10 +57,13 @@ function get_base_info(){
     if [ "$user" = "" ];then
         user=root
     fi
+
+    read -p "Password(default value:):" password
+
     use_key=$(confirm "Using ssh key login?")
-    if [ "$use_key" = "no" ];then
-        read -p "Password(default value:):" password
-    fi
+    # if [ "$use_key" = "no" ];then
+    #     read -p "Password(default value:):" password
+    # fi
     echo "####################################"
     echo "Please confirm the information:"
     echo ""
@@ -94,7 +97,6 @@ function copy_key_remote(){
     while true; do
         echo -e "Do you wish to use the default key([\033[32;1mid_rsa/id_rsa.pub\033[0m]), otherwise will create new keys.y/n:\c"
         read yn
-        read -rsp $'Press enter to continue...or Press Ctrl+C to cancel\n'
         case $yn in
             [Yy]* ) default_key=1; break;;
             [Nn]* ) default_key=0; create_key $server_name; break;;
@@ -131,22 +133,25 @@ function copy_now(){
         KEYS_PATH="$HOME/.ssh/"
     fi
 
-    ssh-copy-id -i ${KEYS_PATH}$1.pub  -p$port -o PubkeyAuthentication=no $user@$ip
+    # ssh-copy-id -i ${KEYS_PATH}$1.pub  -p$port -o PubkeyAuthentication=no $user@$ip
+    echo 'sshpass -p ${password} "/usr/bin/ssh-copy-id" -i ${KEYS_PATH}$1.pub  "-p$port -o PubkeyAuthentication=no $user@$ip"'
+    sshpass -p $password ssh-copy-id -i ${KEYS_PATH}$1.pub  -p$port -o PubkeyAuthentication=no $user@$ip
     local RET=$?
     if [ $RET -ne 0 ];then
         
-        ssh-copy-id -i ${KEYS_PATH}$1.pub  "-p$port -o PubkeyAuthentication=no $user@$ip"
+        sshpass -p $password "/usr/bin/ssh-copy-id" -i ${KEYS_PATH}$1.pub  "-p $port -o PubkeyAuthentication=no $user@$ip"
     fi
 }
 
 function add_config(){
     echo "add configure to $config_name .."
-    if [ "$use_key" = "yes" ] ||[ "$config_name" = "default" ] ;then
+    if [ "$use_key" == "yes" ] && [ "$1" != "default" ] ;then
         cat >> $config_name<<-EOF
 Host $server_name
     hostname $ip
     user $user
     port $port
+    Password $password
     IdentityFile ~/.ssh/$KEYS_NAME/$1
 
 EOF

@@ -7,70 +7,93 @@ echo "# auto gen ssh key  and upload to remote server "
 echo "# Author: Linsir"
 echo "# blog: https://linsir.org"
 
+if [ ! -f "utils.sh" ];then
+    echo "Download utils.sh to $CURRENT_DIR/utils.sh ."
+    curl https://raw.githubusercontent.com/linsir/bash-utils/master/utils.sh -o utils.sh
+    # chmod +x utils.sh
+fi
+
+# locate dir
+BASEDIR=$(dirname "$0")
+cd "$BASEDIR" || exit
+CURRENT_DIR=$(pwd)
+
+# source utils
+source "${CURRENT_DIR}"/utils.sh
+
 KEYS_NAME="keys_store"
 KEYS_PATH="$HOME/.ssh/$KEYS_NAME/"
 
 CONF_PATH="$HOME/.ssh/config.d/"
 
-if [ ! -d ${CONF_PATH} ]; then
-    mkdir ${CONF_PATH} 
-fi
-if [ ! -d ${CONF_PATH} ]; then
-    mkdir ${CONF_PATH} 
-fi
-
-function confirm() {
-    # Usage: x=$(confirm "do you want to continue?")
-    #        if [ "$x" = "yes" ]
-    QUESTION="$1"
-    read -p "${QUESTION} [Yn] " ANSWER
-    if [[ "${ANSWER}" == "n" ]] || [[ "${ANSWER}" == "N" ]]
-    then
-        echo "no"
-    else
-        echo "yes"
-    fi
-}
+if_dir_not_exist_then_mkdir ${CONF_PATH}
+if_dir_not_exist_then_mkdir ${KEYS_PATH}
 
 function get_base_info(){
 
     read -p "Please input config name:" config
+    string_trim ${config}
     if [ "$config" = "" ];then
        config_name=`echo $HOME/.ssh/config`
     else
        config_name=`echo ${CONF_PATH}$config`
     fi
+
     read -p "Please input a server name:" server_name
-    if [ "$server_name" = "" ];then
-        exit
-    fi
+    if_empty_then_exit ${server_name} "param server_name required"
+
     read -p "ip adderss of server:" ip
-    if [ "$ip" = "" ];then
-        exit
-    fi 
+    if_empty_then_exit ${ip} "param ip required"
+
     read -p "sshd port of server(default value:22):" port
     read -p "username of server(default value:root):" user
+    port=$(if_empty_then_return_default "${port}" 22)
+    user=$(if_empty_then_return_default "${user}" root)
 
-    if [ "$port" = "" ];then
-        port=22
-    fi
-    if [ "$user" = "" ];then
-        user=root
-    fi
+    read -p "Password:" password
+    string_trim ${password}
 
-    read -p "Password(default value:):" password
+    use_key=$(confirm_yes "Using ssh key login?")
 
-    use_key=$(confirm "Using ssh key login?")
-    # if [ "$use_key" = "no" ];then
-    #     read -p "Password(default value:):" password
-    # fi
-    echo "####################################"
+    string_trim ${server_name}
+    string_trim ${ip}
+    string_trim ${port}
+    string_trim ${user}
+    string_trim ${password}
+
+    echo_separator
     echo "Please confirm the information:"
     echo ""
-    echo -e "the server name: [\033[32;1m$server_name\033[0m]"
-    echo -e "ssh info: [\033[32;1m$user@$ip:$port\033[0m]"
-    echo -e "use key: [\033[32;1m$use_key\033[0m]"
-    echo -e "password: [\033[32;1m$password\033[0m]"
+    echo -e "the server name: $GREEN$server_name$END"
+    echo -e "ssh info: $GREEN$user@$ip:$port$END"
+    echo -e "use key: $GREEN$use_key$END"
+    echo -e "password: $GREEN$password$END"
+    echo_separator
+}
+
+# ssh client config
+
+function config_ssh_config(){
+    if [ -e "$HOME/.ssh/config" ];then
+        echo "IgnoreUnknown Password\n" >> $HOME/.ssh/config
+        cat >> $HOME/.ssh/config<<-EOF
+Host *
+  StrictHostKeyChecking no
+  ForwardAgent yes
+  ServerAliveInterval 30
+  ControlMaster auto
+  ControlPath /tmp/ssh_mux_%h_%p_%r
+  ControlPersist 600
+  GSSAPIAuthentication no
+  Ciphers aes128-ctr,aes192-ctr,aes256-ctr,aes128-cbc,3des-cbc,aes192-cbc,aes256-cbc
+  HostKeyAlgorithms +ssh-dss
+  KexAlgorithms +diffie-hellman-group1-
+
+EOF
+
+        echo "Include config.d/*" >> $HOME/.ssh/config
+    fi
+
 }
 
 # sshkey gen
@@ -78,10 +101,11 @@ function create_key(){
     if [ $default_key -eq 1 ];then
         KEYS_PATH="$HOME/.ssh/"
     fi
-    echo $KEYS_PATH
-    if [ ! -d ${KEYS_PATH}  ]; then
-        mkdir ${KEYS_PATH} 
-    fi
+    log_info $KEYS_PATH
+
+    if_dir_not_exist_then_mkdir ${KEYS_PATH}
+
+
     if [ -f ${KEYS_PATH}$1 ];then
         echo "the key exist! use old key"
     else
@@ -95,7 +119,7 @@ function create_key(){
 # copy the key to remote server
 function copy_key_remote(){
     while true; do
-        echo -e "Do you wish to use the default key([\033[32;1mid_rsa/id_rsa.pub\033[0m]), otherwise will create new keys.y/n:\c"
+        echo -e "Use default key(${GREEN}id_rsa/id_rsa.pub${END}), or new keys.y/n:\c"
         read yn
         case $yn in
             [Yy]* ) default_key=1; break;;
@@ -105,7 +129,7 @@ function copy_key_remote(){
     done
 
     if [ $default_key -eq 1 ];then
-        echo -e "use default_key [\033[32;1mid_rsa/id_rsa.pub\033[0m].."
+        echo -e "use default_key ${GREEN}id_rsa/id_rsa.pub${END}.."
         create_key id_rsa
         copy_now id_rsa
         local RET=$?
@@ -134,7 +158,7 @@ function copy_now(){
     fi
 
     # ssh-copy-id -i ${KEYS_PATH}$1.pub  -p$port -o PubkeyAuthentication=no $user@$ip
-    echo 'sshpass -p ${password} "/usr/bin/ssh-copy-id" -i ${KEYS_PATH}$1.pub  "-p$port -o PubkeyAuthentication=no $user@$ip"'
+    log_info 'sshpass -p ${password} "/usr/bin/ssh-copy-id" -i ${KEYS_PATH}$1.pub  "-p$port -o PubkeyAuthentication=no $user@$ip"'
     sshpass -p $password ssh-copy-id -i ${KEYS_PATH}$1.pub  -p$port -o PubkeyAuthentication=no $user@$ip
     local RET=$?
     if [ $RET -ne 0 ];then
@@ -144,7 +168,7 @@ function copy_now(){
 }
 
 function add_config(){
-    echo "add configure to $config_name .."
+    log_info "add configure to $config_name .."
     if [ "$use_key" == "yes" ] && [ "$1" != "default" ] ;then
         cat >> $config_name<<-EOF
 Host $server_name

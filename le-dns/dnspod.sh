@@ -18,48 +18,42 @@ if [ -z "$SUB_DOMAIN" ];then
     HOST="_acme-challenge"
 else
     HOST="_acme-challenge.${SUB_DOMAIN%.}"
-fi 
-
-echo "$HOST.$DOMAIN"
+fi
 
 OPTIONS="login_token=${TOKEN}";
-OUT=$(curl -s -k "https://dnsapi.cn/Domain.List" -H "${HEADERS}" -d "${OPTIONS}");
-for line in $OUT;do
-    if [ "$(echo "$line"|grep '<id>' -c)" != 0 ];then
-        DOMAIN_ID=${line%<*};
-        DOMAIN_ID=${DOMAIN_ID#*>};
-        # echo "domain id: $DOMAIN_ID";
-    fi
-    if [ "$(echo "$line"|grep '<name>' -c)" != 0 ];then
-        DOMAIN_NAME=${line%<*};
-        DOMAIN_NAME=${DOMAIN_NAME#*>};
-        # echo "domain name: $DOMAIN_NAME";
-        if [ "$DOMAIN_NAME" = "$DOMAIN" ];then
-           break;
-        fi
+OUT=$(curl -s -k "https://dnsapi.cn/Domain.List" -H "${HEADERS}" -d "${OPTIONS}&keyword=${DOMAIN}");
+# echo $OUT
+RES=$(echo $OUT | python get.py)
+
+for line in $RES; do
+    DOMAIN_ID=$(echo $line |awk -F ':' '{print $1}')
+    DOMAIN_NAME=$(echo $line |awk -F ':' '{print $2}')
+    if [ "$DOMAIN_NAME" = "$DOMAIN" ];then
+        break;
     fi
 done
 
-echo "$DOMAIN_NAME $DOMAIN_ID"
+echo "DOMAIN_NAME: $DOMAIN_NAME DOMAIN_ID: $DOMAIN_ID"
 
-OUT=$(curl -s -k "https://dnsapi.cn/Record.List" -H "${HEADERS}" -d "${OPTIONS}&domain_id=${DOMAIN_ID}")
-for line in $OUT;do
-    if [ "$(echo "$line"|grep '<id>' -c)" != 0 ];then
-        RECORD_ID=${line%<*};
-        RECORD_ID=${RECORD_ID#*>};
-        # echo "record id: $RECORD_ID";
-    fi
-    if [ "$(echo "$line"|grep '<name>' -c)" != 0 ];then
-        RECORD_NAME=${line%<*};
-        RECORD_NAME=${RECORD_NAME#*>};
-        # echo "record name: $RECORD_NAME";
-        if [ "$RECORD_NAME" = "$HOST" ];then
-           break;
-        fi
+if [ "$DOMAIN_NAME" = "" ] || [ "$DOMAIN_ID" = "" ]; then
+    echo "Can not get then DOMAIN_ID and DOMAIN_NAME, STOP NOW !!!"
+    exit 1
+fi
+
+OUT=$(curl -s -k "https://dnsapi.cn/Record.List" -H "${HEADERS}" -d "${OPTIONS}&domain_id=${DOMAIN_ID}&record_type=TXT&sub_domain=$HOST")
+# echo $OUT
+RES=$(echo $OUT | python get.py)
+
+for line in $RES; do
+    RECORD_ID=$(echo $line |awk -F ':' '{print $1}')
+    RECORD_NAME=$(echo $line |awk -F ':' '{print $2}')
+    if [ "$DOMAIN_NAME" = "$HOST" ];then
+        break;
     fi
 done
-echo "$RECORD_NAME:$RECORD_ID"
+echo "RECORD_NAME: $RECORD_NAME RECORD_ID: $RECORD_ID"
 
+echo "POST data: ${OPTIONS}&domain_id=${DOMAIN_ID}&sub_domain=${HOST}&record_line=${RECORD_LINE}&record_type=TXT&value=${TXT_TOKEN}"
 if [ "$RECORD_NAME" = "$HOST" ];then
     echo "UPDATE RECORD"
     OUT=$(curl -k -s "https://dnsapi.cn/Record.Modify" -H "${HEADERS}" -d "${OPTIONS}&domain_id=${DOMAIN_ID}&record_id=${RECORD_ID}&sub_domain=${HOST}&record_line=${RECORD_LINE}&record_type=TXT&value=${TXT_TOKEN}")
